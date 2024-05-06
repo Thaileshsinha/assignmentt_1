@@ -1,78 +1,111 @@
 "use client";
+import app from "@/components/firebase";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  getFirestore,
+  updateDoc,
+} from "@firebase/firestore";
 import axios, { AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 
 export default function Home() {
   interface Item {
-    country: string;
-    currency: string;
+    id: string;
+    fullname: string;
+    age: number;
     site: string;
   }
+  const firestore = getFirestore(app);
   const [responseData, setResponseData] = useState<Item[]>([]);
-  const [country, setCountry] = useState<string>("");
-  const [currency, setCurrency] = useState<string>("");
+  const [fullname, setFullname] = useState<string>("");
+  const [age, setAge] = useState<number>(0);
   const [site, setSite] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
 
   useEffect(() => {
     fetchData();
+    console.log(process.env.WEB_HOST);
   }, []);
 
   const fetchData = async () => {
-    const options: AxiosRequestConfig = {
-      method: "GET",
-      url: `https://sky-scanner3.p.rapidapi.com/get-config?limit=${10}&page=${1}`,
-      headers: {
-        "X-RapidAPI-Key": "11df4b4251msh5485e1a87682e4bp169b70jsn4a85b2c97423",
-        "X-RapidAPI-Host": "sky-scanner3.p.rapidapi.com",
-      },
-    };
-
     try {
-      const response = await axios.request(options);
-      setResponseData(response.data.data.slice(0, 11));
-    } catch (error) {
-      console.error(error);
+      const collectionRef = collection(firestore, "user");
+      const querySnapshot = await getDocs(collectionRef);
+      console.log("check kr", querySnapshot);
+      const items: Item[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        items.push({
+          id: doc.id,
+          fullname: data.fullname,
+          age: data.age,
+          site: data.site,
+        });
+      });
+      setResponseData(items);
+    } catch (err) {
+      console.log(err);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Create a new item object
-    const newItem: Item = {
-      country: country,
-      currency: currency,
+    const newItem: any = {
+      fullname: fullname,
+      age: age,
       site: site,
     };
+    const x = await addDoc(collection(firestore, "user"), newItem);
+
     setResponseData((prevData) => [newItem, ...prevData]);
-    setCountry("");
-    setCurrency("");
+    setFullname("");
+    setAge(0);
     setSite("");
   };
 
   const handleUpdate = (item: Item) => {
     setSelectedItem(item);
-    setCountry(item.country);
-    setCurrency(item.currency);
+    setFullname(item.fullname);
+    setAge(item.age);
     setSite(item.site);
   };
+  console.log(selectedItem);
 
-  const updateItem = () => {
+  const updateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log();
+
     const updatedData = responseData.map((item) =>
-      item.country === selectedItem?.country
-        ? { ...item, country, currency, site }
-        : item
+      item.id === selectedItem?.id ? { ...item, fullname, age, site } : item
     );
     setResponseData(updatedData);
+
+    try {
+      const docRef = doc(collection(firestore, "user"), selectedItem?.id);
+      const x = await updateDoc(docRef, { fullname, age, site });
+    } catch (err) {
+      console.error("Error updating document: ", err);
+    }
+
     setSelectedItem(null);
-    setCountry("");
-    setCurrency("");
+    setFullname("");
+    setAge(0);
     setSite("");
   };
 
-  const handleDelete = async (country: string) => {
-    const deleteByCountry = responseData.filter((e) => e.country !== country);
-    setResponseData(deleteByCountry);
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteDoc(doc(collection(firestore, "user"), id));
+      const deleteByfullname = responseData.filter((e) => e.id !== id);
+      setResponseData(deleteByfullname);
+    } catch (err) {
+      console.error("Error deleting document: ", err);
+    }
   };
 
   return (
@@ -88,18 +121,19 @@ export default function Home() {
             >
               <input
                 type="text"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                placeholder="Country"
+                value={fullname}
+                onChange={(e) => setFullname(e.target.value)}
+                placeholder="fullname"
                 className="border border-gray-300 rounded mr-2 mb-2 sm:mb-0 px-4 py-2"
               />
               <input
-                type="text"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                placeholder="Currency"
+                type="number"
+                value={age}
+                onChange={(e) => setAge(parseInt(e.target.value))}
+                placeholder="age"
                 className="border border-gray-300 rounded mr-2 mb-2 sm:mb-0 px-4 py-2"
               />
+
               <input
                 type="text"
                 value={site}
@@ -127,18 +161,19 @@ export default function Home() {
             >
               <input
                 type="text"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                placeholder="Country"
+                value={fullname}
+                onChange={(e) => setFullname(e.target.value)}
+                placeholder="fullname"
                 className="border border-gray-300 rounded mr-2 mb-2 sm:mb-0 px-4 py-2"
               />
               <input
-                type="text"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                placeholder="Currency"
+                type="number"
+                value={age}
+                onChange={(e) => setAge(parseInt(e.target.value))}
+                placeholder="age"
                 className="border border-gray-300 rounded mr-2 mb-2 sm:mb-0 px-4 py-2"
               />
+
               <input
                 type="text"
                 value={site}
@@ -158,14 +193,14 @@ export default function Home() {
         )}
         {responseData.map((item, index) => (
           <div
-            key={index}
+            key={item.id}
             className="flex items-center justify-between bg-gray-100 rounded-md p-4 mb-2"
           >
             <div>
-              <p className="font-semibold">{item.country}</p>
+              <p className="font-semibold">{item.fullname}</p>
               <p className="text-gray-500">{item.site}</p>
             </div>
-            <p className="font-semibold">{item.currency}</p>
+            <p className="font-semibold">{item.age}</p>
             <div>
               <button
                 onClick={() => handleUpdate(item)}
@@ -174,7 +209,7 @@ export default function Home() {
                 Update
               </button>
               <button
-                onClick={() => handleDelete(item.country)}
+                onClick={() => handleDelete(item.id)}
                 className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
               >
                 Delete
