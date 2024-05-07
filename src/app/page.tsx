@@ -58,7 +58,6 @@ export default function Home() {
       age: age,
       site: site,
     };
-    // const x = await addDoc(collection(firestore, "user"), newItem);
 
     const postreq = await axios.post("http://localhost:3000/api/curd", newItem);
 
@@ -86,12 +85,12 @@ export default function Home() {
     setResponseData(updatedData);
 
     try {
-      const postreq = await axios.post(
-        "http://localhost:3000/api/update",
-        selectedItem
-      );
-      // const docRef = doc(collection(firestore, "user"), selectedItem?.id);
-      // const x = await updateDoc(docRef, { fullname, age, site });
+      const postreq = await axios.post("http://localhost:3000/api/update", {
+        fullname,
+        age,
+        site,
+        id: selectedItem?.id,
+      });
     } catch (err) {
       console.error("Error updating document: ", err);
     }
@@ -107,7 +106,6 @@ export default function Home() {
       const postreq = await axios.post("http://localhost:3000/api/delete", {
         id: id,
       });
-      // await deleteDoc(doc(collection(firestore, "user"), id));
       const deleteByfullname = responseData.filter((e) => e.id !== id);
       setResponseData(deleteByfullname);
     } catch (err) {
@@ -207,7 +205,7 @@ export default function Home() {
               <p className="font-semibold">{item.fullname}</p>
               <p className="text-gray-500">{item.site}</p>
             </div>
-            <p className="font-semibold">{item.id}</p>
+            <p className="font-semibold">{item.age}</p>
             <div>
               <button
                 onClick={() => handleUpdate(item)}

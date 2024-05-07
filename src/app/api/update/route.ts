@@ -4,6 +4,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   getFirestore,
   updateDoc,
@@ -16,8 +17,15 @@ export async function POST(request: Request) {
 
   try {
     const docRef = doc(collection(firestore, "user"), id);
-    const x = await updateDoc(docRef, { fullname, age, site });
-    return Response.json({ message: "update successfully" });
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      throw new Error("Document does not exist");
+    }
+
+    // Perform the update operation
+    await updateDoc(docRef, { fullname, age, site });
+    return Response.json(docRef);
   } catch (err) {
     console.log("error registering user", err);
     return Response.json(
