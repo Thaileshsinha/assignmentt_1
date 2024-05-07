@@ -28,22 +28,20 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
-    console.log(process.env.WEB_HOST);
   }, []);
+  console.log(process.env.CHERK_SIGN_UP_URL);
 
   const fetchData = async () => {
     try {
-      const collectionRef = collection(firestore, "user");
-      const querySnapshot = await getDocs(collectionRef);
-      console.log("check kr", querySnapshot);
+      const repo = await axios.get("http://localhost:3000/api/curd");
+
       const items: Item[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
+      repo.data.user.forEach((doc: any) => {
         items.push({
           id: doc.id,
-          fullname: data.fullname,
-          age: data.age,
-          site: data.site,
+          fullname: doc.fullname,
+          age: doc.age,
+          site: doc.site,
         });
       });
       setResponseData(items);
@@ -60,7 +58,9 @@ export default function Home() {
       age: age,
       site: site,
     };
-    const x = await addDoc(collection(firestore, "user"), newItem);
+    // const x = await addDoc(collection(firestore, "user"), newItem);
+
+    const postreq = await axios.post("http://localhost:3000/api/curd", newItem);
 
     setResponseData((prevData) => [newItem, ...prevData]);
     setFullname("");
@@ -73,8 +73,8 @@ export default function Home() {
     setFullname(item.fullname);
     setAge(item.age);
     setSite(item.site);
+    console.log(item);
   };
-  console.log(selectedItem);
 
   const updateItem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,8 +86,12 @@ export default function Home() {
     setResponseData(updatedData);
 
     try {
-      const docRef = doc(collection(firestore, "user"), selectedItem?.id);
-      const x = await updateDoc(docRef, { fullname, age, site });
+      const postreq = await axios.post(
+        "http://localhost:3000/api/update",
+        selectedItem
+      );
+      // const docRef = doc(collection(firestore, "user"), selectedItem?.id);
+      // const x = await updateDoc(docRef, { fullname, age, site });
     } catch (err) {
       console.error("Error updating document: ", err);
     }
@@ -100,7 +104,10 @@ export default function Home() {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteDoc(doc(collection(firestore, "user"), id));
+      const postreq = await axios.post("http://localhost:3000/api/delete", {
+        id: id,
+      });
+      // await deleteDoc(doc(collection(firestore, "user"), id));
       const deleteByfullname = responseData.filter((e) => e.id !== id);
       setResponseData(deleteByfullname);
     } catch (err) {
@@ -200,7 +207,7 @@ export default function Home() {
               <p className="font-semibold">{item.fullname}</p>
               <p className="text-gray-500">{item.site}</p>
             </div>
-            <p className="font-semibold">{item.age}</p>
+            <p className="font-semibold">{item.id}</p>
             <div>
               <button
                 onClick={() => handleUpdate(item)}
