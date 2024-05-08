@@ -11,6 +11,7 @@ import {
 const firestore = getFirestore(app);
 export async function GET(request: Request) {
   try {
+    console.log(process.env.databaseURL);
     const collectionRef = collection(firestore, "user");
     const querySnapshot = await getDocs(collectionRef);
     const users = querySnapshot.docs.map((doc) => {

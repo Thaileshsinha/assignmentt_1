@@ -19,6 +19,7 @@ export default function Home() {
     age: number;
     site: string;
   }
+  console.log(process.env.SHUBH_AM);
   const firestore = getFirestore(app);
   const [responseData, setResponseData] = useState<Item[]>([]);
   const [fullname, setFullname] = useState<string>("");
